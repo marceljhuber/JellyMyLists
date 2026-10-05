@@ -107,6 +107,8 @@ CHROME=<path to chrome> node dev/e2e.mjs        # end-to-end test (creates and r
 CHROME=<path to chrome> node dev/screenshots.mjs  # regenerates docs/screenshots
 ```
 
+More on how it works and why: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 Layout: `src/Jellyfin.Plugin.MyLists` — `Api/MyListsController.cs` (routes), `ListService.cs` (merge/sync/DTOs), `Resolver.cs` (library matching, rules), `Importers.cs` (text/CSV/MDBList/Letterboxd/TMDB), `ListStore.cs` (JSON storage), `Web/` (the page, plain JS, no build step), `SidebarInjector.cs` + `Web/inject.js` (sidebar entry).
 
 ## License
