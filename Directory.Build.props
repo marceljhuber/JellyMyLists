@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <JellyfinTarget Condition="'$(JellyfinTarget)' == ''">10.11</JellyfinTarget>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts/obj/$(JellyfinTarget)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)artifacts/bin/$(JellyfinTarget)/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

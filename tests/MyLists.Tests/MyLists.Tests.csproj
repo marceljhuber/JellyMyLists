@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Only Importers.cs: it has no Jellyfin dependencies, so the tests need no server assemblies. -->
+    <Compile Include="../../src/Jellyfin.Plugin.MyLists/Importers.cs" Link="Importers.cs" />
+    <Compile Include="../../src/Jellyfin.Plugin.MyLists/Models.cs" Link="Models.cs" />
+  </ItemGroup>
+</Project>

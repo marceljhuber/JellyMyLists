@@ -1,0 +1,33 @@
+// Regenerates docs/screenshots/* against the demo server (dev/demo-server.sh).  CHROME=<path to chrome> node dev/screenshots.mjs
+import { chromium } from 'playwright-core';
+const U = process.env.JF_URL || 'http://localhost:28300';
+const out = (n) => `docs/screenshots/${n}.png`;
+const b = await chromium.launch({ executablePath: process.env.CHROME });
+const auth = await (await fetch(`${U}/Users/AuthenticateByName`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'MediaBrowser Client="shots", Device="cli", DeviceId="shots", Version="1"' }, body: JSON.stringify({ Username: 'admin', Pw: 'test' }) })).json();
+const lists = await (await fetch(`${U}/MyLists/api/lists`, { headers: { Authorization: `MediaBrowser Token="${auth.AccessToken}"` } })).json();
+const id = (n) => lists.find((l) => l.name === n).id;
+const page = async (w, h) => {
+  const p = await b.newPage({ viewport: { width: w, height: h } });
+  await p.addInitScript((c) => localStorage.setItem('jellyfin_credentials', JSON.stringify(c)), { Servers: [{ Id: auth.ServerId, AccessToken: auth.AccessToken, UserId: auth.User.Id, ManualAddress: U, LocalAddress: U, DateLastAccessed: Date.now() }] });
+  return p;
+};
+let p = await page(1280, 760);
+await p.goto(`${U}/MyLists/`); await p.waitForSelector('.lcard'); await p.waitForTimeout(1500); await p.screenshot({ path: out('overview') });
+await p.goto(`${U}/MyLists/#/list/${id('Silent Classics')}`); await p.waitForSelector('.poster'); await p.waitForTimeout(1500); await p.screenshot({ path: out('list') });
+await p.goto(`${U}/MyLists/#/list/${id('Silent Classics')}`); await p.waitForSelector('.poster'); await p.selectOption('#sort', 'unwatched_first'); await p.waitForTimeout(500); await p.screenshot({ path: out('list-unwatched-first') });
+await p.goto(`${U}/MyLists/#/list/${id('Halloween Night')}`); await p.waitForSelector('.poster'); await p.click('#add'); await p.fill('dialog #q', 'plan'); await p.waitForSelector('.sres'); await p.waitForTimeout(800); await p.screenshot({ path: out('add-movies') });
+await p.goto(`${U}/MyLists/`); await p.waitForSelector('.lcard'); await p.click('#new'); await p.click('dialog [data-t=rule]'); await p.fill('dialog #n', 'Buster Keaton'); await p.fill('dialog #rd', 'Buster Keaton'); await p.screenshot({ path: out('new-rule') });
+await p.click('dialog [data-t=mdblist]'); await p.click('dialog [data-mdb*="top-250"]'); await p.screenshot({ path: out('new-mdblist') });
+await p.setViewportSize({ width: 1280, height: 1100 });
+await p.click('dialog [data-t=csv]');
+await p.fill('dialog #tx', 'Here is your list:\n```\n1. **Metropolis** (1927)\n2. Nosferatu - 1922\n3. "The General", 1926\nBlade Runner 2049\n```');
+await p.click('dialog [data-check]'); await p.waitForSelector('dialog .prev'); await p.click('dialog details.help summary'); await p.waitForTimeout(300);
+await p.locator('dialog').screenshot({ path: out('new-text-chatgpt') });
+await p.close();
+p = await page(390, 800);
+await p.goto(`${U}/MyLists/#/list/${id('Silent Classics')}`); await p.waitForSelector('.poster'); await p.waitForTimeout(1500); await p.screenshot({ path: out('mobile') });
+await p.close();
+p = await page(1280, 720);
+await p.goto(`${U}/web/#/home`); await p.waitForTimeout(5000);
+await p.click('button[aria-label="Open drawer"], .mainDrawerButton, [aria-label*="enu"]'); await p.waitForTimeout(1000); await p.screenshot({ path: out('sidebar') });
+await b.close();

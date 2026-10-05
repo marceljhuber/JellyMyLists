@@ -1,0 +1,9 @@
+bin/
+obj/
+artifacts/
+dist/
+.demo/
+.vs/
+.idea/
+*.user
+dev/node_modules
