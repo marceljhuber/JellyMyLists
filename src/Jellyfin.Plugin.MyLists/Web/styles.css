@@ -26,7 +26,7 @@ h2{margin:0 0 4px;font-size:22px}.dim{color:var(--dim)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,210px));justify-content:center;gap:26px 22px;margin-top:26px}
 .poster{position:relative;border-radius:var(--rs);overflow:hidden;background:transparent;border:1px solid var(--line2);display:block;transition:.15s}
 .poster:hover{border-color:var(--text)}
-.poster .img{aspect-ratio:2/3;background:var(--line) center/cover no-repeat;display:flex;align-items:flex-end}
+.poster .img{aspect-ratio:2/3;background:var(--line2);overflow:hidden}.poster .img img{width:100%;height:100%;object-fit:cover;display:block}
 .poster.watched .img{filter:grayscale(1);opacity:.38}
 .poster.watched::after{content:"✓";position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#06231a;font-weight:700;display:flex;align-items:center;justify-content:center}
 .poster .t{padding:8px 10px;font-size:14px;text-align:center}.poster .t small{color:var(--dim);display:block}
@@ -48,7 +48,7 @@ dialog::backdrop{background:#0009}
 
 .sresults{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:12px;max-height:50vh;overflow:auto}
 .sres{background:none;border:1px solid var(--line2);border-radius:var(--rs);padding:0;cursor:pointer;text-align:left;overflow:hidden;position:relative}
-.sres:hover{border-color:var(--text)}.sres .img{aspect-ratio:2/3;background:var(--line2) center/cover}
+.sres:hover{border-color:var(--text)}.sres .img{aspect-ratio:2/3;background:var(--line2);overflow:hidden}.sres .img img{width:100%;height:100%;object-fit:cover;display:block}
 .sres small{display:block;padding:4px 6px;font-size:12px}.sres.added{opacity:.45}.sres.added::after{content:"✓ added";position:absolute;top:6px;left:6px;background:var(--ok);color:#06231a;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:600}
 .coverrow{display:flex;gap:12px;align-items:center}.coverrow img{width:64px;height:96px;object-fit:cover;border-radius:var(--rs);border:1px solid var(--line)}
 details.help{margin-top:8px}details.help summary{cursor:pointer;color:var(--dim)}details.help pre{white-space:pre-wrap;background:rgba(0,0,0,.25);border-radius:var(--rs);padding:10px;font-size:12px}

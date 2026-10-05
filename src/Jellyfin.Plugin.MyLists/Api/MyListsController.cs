@@ -87,7 +87,8 @@ public sealed class MyListsController(
             return Content(reader.ReadToEnd().Replace("{{v}}", AssetVersion, StringComparison.Ordinal), type);
         }
 
-        Response.Headers.CacheControl = "no-cache";
+        // app.js / styles.css are requested with ?v=<plugin version>, so they can be cached for good; inject.js (no version) must revalidate.
+        Response.Headers.CacheControl = Request.Query.ContainsKey("v") ? "public, max-age=31536000, immutable" : "no-cache";
         return File(stream, type);
     }
 
@@ -116,7 +117,7 @@ public sealed class MyListsController(
         var lists = store.ForOwner(Owner(user));
         foreach (var l in lists.Where(l => l.SourceType == "rule"))
         {
-            await service.SyncAsync(l, user, HttpContext.RequestAborted).ConfigureAwait(false);
+            await service.EnsureRuleFreshAsync(l, user, HttpContext.RequestAborted).ConfigureAwait(false);
         }
 
         service.RefreshStaleInBackground(lists, user);
@@ -224,7 +225,7 @@ public sealed class MyListsController(
 
         if (list.SourceType == "rule")
         {
-            await service.SyncAsync(list, user, HttpContext.RequestAborted).ConfigureAwait(false);
+            await service.EnsureRuleFreshAsync(list, user, HttpContext.RequestAborted).ConfigureAwait(false);
         }
 
         return JsonOut(service.Detail(list, resolver.Build(user)));

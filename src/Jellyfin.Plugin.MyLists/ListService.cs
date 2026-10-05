@@ -79,6 +79,23 @@ public sealed class ListService(ListStore store, Resolver resolver, IHttpClientF
         }
     }
 
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<(Guid User, string List), (long Version, string Rule)> _ruleState = new();
+
+    /// <summary>Recompute a rule list only if the library or the rule changed since the last time; otherwise the stored entries are current.</summary>
+    public async Task EnsureRuleFreshAsync(MyList list, User user, CancellationToken ct)
+    {
+        var key = (user.Id, list.Id);
+        var rule = System.Text.Json.JsonSerializer.Serialize(list.Rule);
+        if (_ruleState.TryGetValue(key, out var state) && state.Version == resolver.Version && state.Rule == rule)
+        {
+            return;
+        }
+
+        var version = resolver.Version;
+        await SyncAsync(list, user, ct).ConfigureAwait(false);
+        _ruleState[key] = (version, rule);
+    }
+
     private int _refreshing;
 
     /// <summary>Re-read URL based lists that have not been synced for a day, in the background so page loads never wait on a remote site.</summary>

@@ -6,7 +6,7 @@ using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.MyLists;
 
-/// <summary>My Lists: ordered personal lists (manual, rule based or imported) with watched titles greyed out.</summary>
+/// <summary>My Lists: ordered personal movie lists (manual, rule based or imported) with watched titles greyed out.</summary>
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
@@ -21,7 +21,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
     public override Guid Id => Guid.Parse("8c2b7d54-3e1a-4f6b-9a0d-5b7c1e2f4a63");
 
-    public override string Description => "Ordered personal lists (Tarantino, IMDb Top 250, ...) with already watched titles greyed out.";
+    public override string Description => "Watch-checklists: ordered movie lists (IMDb Top 250, a director's films, a friend's top 10) where movies you have already watched stay in place, greyed out.";
 
     public IEnumerable<PluginPageInfo> GetPages() =>
     [

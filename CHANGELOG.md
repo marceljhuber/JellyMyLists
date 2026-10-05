@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+- Speed: the movie index is cached per user (rebuilt only when the library changes), rule lists are recomputed only when the library or the rule changed, watched state stays live. API calls on a 1,800 movie library: ~110 ms → ~25 ms.
+- Posters are lazy `<img>` tags (they used to all load at once), smaller size, static files cached for good, the web font no longer blocks rendering.
+- The browser tab now has an icon: Jellyfin's own favicon (own list icon as fallback).
+- Clearer README and plugin description.
+
 ## 0.3.3
 - Fix: Letterboxd list exports were misread (their metadata header row was taken for the film table).
 - Fix: list entries are read under a lock, so a background refresh can no longer break a page load.

@@ -20,11 +20,16 @@ async function api(path, body, method) {
   if (!res.ok) throw Object.assign(new Error(data?.error || `Request failed (${res.status})`), { status: res.status });
   return data;
 }
+// Use Jellyfin's own tab icon (its file name carries a hash that changes per version, so read it from index.html).
+fetch('../web/index.html').then((r) => r.text()).then((h) => {
+  const m = h.match(/<link[^>]*rel="shortcut icon"[^>]*href="([^"]+)"/) || h.match(/<link[^>]*href="([^"]+)"[^>]*rel="shortcut icon"/);
+  if (m) { const l = $('#favicon'); l.type = ''; l.href = `../web/${m[1]}`; }
+}).catch(() => {});
 let serverId = '';
 fetch('../System/Info/Public').then((r) => r.json()).then((i) => { serverId = i.Id || ''; }).catch(() => {});
 const details = (id) => `../web/#/details?id=${id}${serverId ? `&serverId=${serverId}` : ''}`;
 const coverUrl = (f) => `cover/${f}`;
-const img = (id, tag, w = 400) => `../Items/${id}/Images/Primary?fillWidth=${w}&quality=85${tag ? `&tag=${tag}` : ''}`;
+const img = (id, tag, w = 400) => `../Items/${id}/Images/Primary?fillWidth=${w}&quality=80${tag ? `&tag=${tag}` : ''}`;
 let toastTimer;
 function toast(msg, err) {
   const t = $('#toast');
@@ -183,7 +188,7 @@ async function listView(id) {
         </div></div>
       ${inLib.length ? `<div class="grid" id="grid">${shown.map((e, i) => `<a class="poster ${e.played ? 'watched' : ''}" data-k="${e.key}" draggable="${canDrag}" href="${details(e.itemId)}">
           ${showPos ? `<span class="pos">${i + 1}</span>` : ''}
-          <div class="img" style="background-image:url('${img(e.itemId, e.imageTag)}')"></div>
+          <div class="img"><img loading="lazy" decoding="async" alt="" src="${img(e.itemId, e.imageTag, 320)}"></div>
           <button class="x" data-rm="${e.key}" title="Remove from list">✕</button>
           <div class="t">${esc(e.title)}<small>${e.year ?? ''}</small></div></a>`).join('')}</div>` : `<div class="empty">${list.sourceType === 'rule' ? 'No movie in your library matches this rule.' : 'This list is empty.'}</div>`}
       ${missing.length ? `<details class="missing"><summary>${missing.length} not in your library</summary><ul>${missing.map((e) => `<li>${esc(e.title)} ${e.year ? `(${e.year})` : ''} ${list.sourceType !== 'rule' ? `<button class="btn danger" style="padding:0 8px" data-rm="${e.key}">remove</button>` : ''}</li>`).join('')}</ul></details>` : ''}`;
@@ -267,14 +272,15 @@ function addDialog(list, done) {
   let t;
   q.oninput = () => { clearTimeout(t); t = setTimeout(async () => {
     const r = await api(`search?q=${encodeURIComponent(q.value)}`).catch(() => []);
-    res.innerHTML = r.length ? r.map((m) => `<button class="sres ${added.has(m.itemId) ? 'added' : ''}" data-i="${m.itemId}"><div class="img" style="background-image:url('${img(m.itemId, '', 200)}')"></div><small>${esc(m.title)} ${m.year ? `(${m.year})` : ''}</small></button>`).join('') : (q.value.length > 1 ? '<p class="dim">No match in your library.</p>' : '');
+    res.innerHTML = r.length ? r.map((m) => `<button class="sres ${added.has(m.itemId) ? 'added' : ''}" data-i="${m.itemId}"><div class="img"><img loading="lazy" decoding="async" alt="" src="${img(m.itemId, '', 200)}"></div><small>${esc(m.title)} ${m.year ? `(${m.year})` : ''}</small></button>`).join('') : (q.value.length > 1 ? '<p class="dim">No match in your library.</p>' : '');
     res.querySelectorAll('.sres').forEach((b) => { b.onclick = async () => { if (b.classList.contains('added')) return; try { await api(`lists/${list.id}/entries`, { itemId: b.dataset.i }); added.add(b.dataset.i); b.classList.add('added'); } catch (e) { toast(e.message, true); } }; });
   }, 250); };
 }
 
 // ---------------------------------------------------------------- router
+let whoLoaded = false;
 async function route() {
-  try { const s = await api('status'); $('#who').textContent = s.user || ''; } catch { /* ignore */ }
+  if (!whoLoaded) { whoLoaded = true; api('status').then((s) => { $('#who').textContent = s.user || ''; }).catch(() => {}); }
   const m = location.hash.match(/^#\/list\/(\w+)/);
   m ? listView(m[1]) : overview();
 }

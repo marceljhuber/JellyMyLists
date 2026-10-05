@@ -1,9 +1,15 @@
-# My Lists for Jellyfin
+# My Lists: watch-checklists for Jellyfin
 
-Personal, ordered movie lists inside Jellyfin. Not playlists, not collections: a list keeps **every** movie in a fixed
-order, and the ones you have already **watched stay in place, greyed out with a green check**.
+**Make a list like "IMDb Top 250" or "all films by Tarantino", keep it in order, and see at a glance which ones you have already seen.**
+Watched movies stay in the list, greyed out with a green check, instead of disappearing like in a watchlist.
 
-Examples: "Tarantino, by release date", "Top 10 horror from a friend", "IMDb Top 250 in IMDb order".
+Jellyfin's playlists and collections can't do this: a playlist is for *playing* things in a row, a collection is a
+tag on movies, and neither shows you "I have seen 142 of these 250". My Lists is a new sidebar entry for exactly that.
+
+- **Chase a ranking**: import the IMDb Top 250 (or any [MDBList](https://mdblist.com/toplists/) list) and tick them off in IMDb order.
+- **Follow a filmmaker**: "Director = Christopher Nolan" fills itself from your library and grows when you add films.
+- **Share taste**: paste a friend's "top 10 horror" (text, IMDb or Letterboxd export) and see which ones you own and haven't watched.
+- **Your own order**: sort by release date, rating or title, drag to rearrange, **Save this order**. Each user has their own lists and their own greyed-out state.
 
 | | |
 |---|---|
@@ -86,7 +92,7 @@ Click a poster to open the movie in Jellyfin. `Edit` renames, changes the rule, 
 - Web client only (browser, Jellyfin Media Player and other web-based clients). Native Android TV / Swiftfin / Roku apps do not know the page.
 - Movies only, no series.
 - A rule needs the **full person name** as stored in Jellyfin's metadata; a movie whose metadata lacks the director entry will not match.
-- Each page load reads your movie library once (milliseconds for a few thousand movies; not cached).
+- The movie index is cached per user and rebuilt when your library changes (a few hundred ms for ~2,000 movies, once); only watched state is read on every load. Posters load lazily.
 - Jellyfin 12 build is untested at runtime; 10.9 / 10.10 are not supported.
 
 ## Development

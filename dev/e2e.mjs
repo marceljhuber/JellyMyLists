@@ -74,6 +74,11 @@ try {
   await p.goto(`${U}/MyLists/#/list/${csv.data.id}`); await p.waitForSelector('.poster');
   const playedNow = (await api(`lists/${csv.data.id}`)).data.entries.filter((e) => e.inLibrary && e.played).length;
   check('watched posters are greyed (one per played movie)', playedNow >= 1 && (await p.locator('.poster.watched').count()) === playedNow, `${playedNow}`);
+  await p.waitForTimeout(800);
+  const icon = await p.getAttribute('#favicon', 'href');
+  check("tab icon is Jellyfin's own favicon", /\.\.\/web\/favicon\.[0-9a-f]+\.ico$/.test(icon), icon);
+  const lazy = await p.locator('.poster img[loading=lazy]').count();
+  check('posters are lazy-loaded images', lazy === (await p.locator('.poster').count()) && lazy > 0, `${lazy}`);
   await p.selectOption('#sort', 'title'); await p.locator('.poster').nth(2).dragTo(p.locator('.poster').nth(0));
   check('drag & drop offers "Save this order"', (await p.locator('#save').count()) === 1);
   await p.click('.poster >> nth=0'); await p.waitForTimeout(3500);
