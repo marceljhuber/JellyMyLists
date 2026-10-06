@@ -37,6 +37,8 @@ public sealed class MyList
     /// <summary>source | manual | release_asc | release_desc | title | rating | runtime | unwatched_first</summary>
     public string DefaultSort { get; set; } = "source";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>Position in the user's own order of lists ("Custom order" on the overview); null = not placed yet.</summary>
+    public int? SortIndex { get; set; }
     public DateTime? SyncedAt { get; set; }
     /// <summary>File name of a user-uploaded cover in the plugin data folder, or null for the automatic poster collage.</summary>
     public string? CoverFile { get; set; }

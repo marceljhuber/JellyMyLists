@@ -210,6 +210,21 @@ public sealed class MyListsController(
         return JsonOut(service.Preview(req.Text ?? string.Empty, resolver.Build(user)));
     }
 
+    public sealed record ListOrderRequest(List<string>? Ids);
+
+    /// <summary>Save the user's own order of lists (drag and drop on the overview).</summary>
+    [HttpPost("api/order")]
+    public async Task<IActionResult> ListOrder([FromBody] ListOrderRequest req)
+    {
+        if (await CurrentUser().ConfigureAwait(false) is not { } user)
+        {
+            return Error(401, "Sign in to Jellyfin first");
+        }
+
+        store.SetOrder(Owner(user), req.Ids ?? []);
+        return JsonOut(new { ok = true });
+    }
+
     [HttpGet("api/lists/{id}")]
     public async Task<IActionResult> Get(string id)
     {

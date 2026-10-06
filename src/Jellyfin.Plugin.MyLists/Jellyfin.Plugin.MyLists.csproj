@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- dotnet build -p:JellyfinTarget=10.11 (net9.0, default) | 12 (net10.0) -->
   <PropertyGroup>
-    <PluginVersion>0.4.0</PluginVersion>
+    <PluginVersion>0.5.0</PluginVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(JellyfinTarget)' == '10.11'">
     <TargetFramework>net9.0</TargetFramework>

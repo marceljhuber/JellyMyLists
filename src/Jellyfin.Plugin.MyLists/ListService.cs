@@ -159,6 +159,8 @@ public sealed class ListService(ListStore store, Resolver resolver, IHttpClientF
             sourceUrl = l.SourceUrl,
             defaultSort = l.DefaultSort,
             syncedAt = l.SyncedAt,
+            createdAt = l.CreatedAt,
+            sortIndex = l.SortIndex,
             cover = l.CoverFile,
             total = entries.Count,
             available = inLib.Count,

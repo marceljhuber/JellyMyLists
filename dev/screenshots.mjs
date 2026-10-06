@@ -13,6 +13,9 @@ const page = async (w, h) => {
 };
 let p = await page(1280, 760);
 await p.goto(`${U}/MyLists/`); await p.waitForSelector('.lcard'); await p.waitForTimeout(1500); await p.screenshot({ path: out('overview') });
+await p.evaluate(() => localStorage.setItem('ml.view', JSON.stringify({ size: 280, cols: 3, rows: 0, coverH: 150, progress: true, source: true, counts: true, hideDone: false, sort: 'pct', dir: 'desc', src: 'all' })));
+await p.reload(); await p.waitForSelector('.lcard'); await p.click('#vbtn'); await p.waitForTimeout(1200); await p.screenshot({ path: out('overview-view') });
+await p.evaluate(() => localStorage.removeItem('ml.view'));
 await p.goto(`${U}/MyLists/#/list/${id('Silent Classics')}`); await p.waitForSelector('.poster'); await p.waitForTimeout(1500); await p.screenshot({ path: out('list') });
 await p.goto(`${U}/MyLists/#/list/${id('Silent Classics')}`); await p.waitForSelector('.poster'); await p.selectOption('#sort', 'unwatched_first'); await p.waitForTimeout(500); await p.screenshot({ path: out('list-unwatched-first') });
 await p.goto(`${U}/MyLists/#/list/${id('Halloween Night')}`); await p.waitForSelector('.poster'); await p.click('#add'); await p.fill('dialog #q', 'plan'); await p.waitForSelector('.sres'); await p.waitForTimeout(800); await p.screenshot({ path: out('add-movies') });

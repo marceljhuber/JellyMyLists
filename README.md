@@ -14,6 +14,7 @@ tag on movies, and neither shows you "I have seen 142 of these 250". My Lists is
 | | |
 |---|---|
 | ![Overview](docs/screenshots/overview.png) | ![List](docs/screenshots/list.png) |
+| ![Overview with view settings](docs/screenshots/overview-view.png) | ![Phone](docs/screenshots/mobile.png) |
 
 ## Features
 
@@ -25,6 +26,7 @@ tag on movies, and neither shows you "I have seen 142 of these 250". My Lists is
   - **Text / CSV**: IMDb list export, Letterboxd export, or one title per line (see below).
 - **Sorting**: original source order, saved order, release date ↑/↓, title, rating, runtime, unwatched first. Hide watched. Drag & drop, then **Save this order**. The source order is never lost; the saved order is stored separately.
 - **Movies not in your library** are remembered and listed under "not in your library". They appear as soon as you add them.
+- **Customisable overview**: choose card size, number of columns and rows, cover height and what a card shows (counts, progress bar, source). Sort and filter your lists: your own order (drag & drop), name, date, number of movies, % watched, left to watch, source type; search; hide completed lists. Click **⚙ View** on the overview. The view is stored in your browser, the drag-and-drop order on the server.
 - **Custom cover** per list (PNG/JPEG/WebP, 5 MB) or an automatic poster collage.
 - **Sidebar entry** "My Lists" (needs the File Transformation plugin) and the page at `/MyLists/`. Styled after the ElegantFin theme, dark, works on phones.
 

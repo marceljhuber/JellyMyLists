@@ -88,19 +88,140 @@ function sortEntries(entries, mode) {
 }
 
 // ---------------------------------------------------------------- overview
+// ---------------------------------------------------------------- overview (customisable)
+const VIEW_DEFAULTS = { size: 300, cols: 0, rows: 0, coverH: 150, progress: true, source: true, counts: true, hideDone: false, sort: 'name', dir: 'asc', src: 'all' };
+const LIST_SORTS = [['custom', 'My order'], ['name', 'Name'], ['created', 'Date created'], ['synced', 'Last updated'], ['movies', 'Number of movies'], ['pct', '% watched'], ['remaining', 'Left to watch'], ['source', 'Source type']];
+const loadView = () => { try { return { ...VIEW_DEFAULTS, ...JSON.parse(localStorage.getItem('ml.view') || '{}') }; } catch { return { ...VIEW_DEFAULTS }; } };
+const saveView = (v) => { try { localStorage.setItem('ml.view', JSON.stringify(v)); } catch { /* private mode */ } };
+const pctOf = (l) => (l.available ? l.watched / l.available : 0);
+
+function sortLists(lists, v) {
+  const dir = v.dir === 'desc' ? -1 : 1;
+  const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+  const key = {
+    name: (a, b) => byName(a, b), created: (a, b) => new Date(a.createdAt) - new Date(b.createdAt), synced: (a, b) => new Date(a.syncedAt || a.createdAt) - new Date(b.syncedAt || b.createdAt),
+    movies: (a, b) => a.available - b.available, pct: (a, b) => pctOf(a) - pctOf(b), remaining: (a, b) => (a.available - a.watched) - (b.available - b.watched), source: (a, b) => a.sourceType.localeCompare(b.sourceType),
+    custom: (a, b) => (a.sortIndex ?? 1e9) - (b.sortIndex ?? 1e9),
+  }[v.sort] || byName;
+  return [...lists].sort((a, b) => (key(a, b) * dir) || byName(a, b));
+}
+
 async function overview() {
   app.innerHTML = '<p class="dim">Loading…</p>';
   let lists;
   try { lists = await api('lists'); } catch (e) { return needLogin(e); }
-  app.innerHTML = `<div class="head"><h2>My Lists</h2><div class="row"><button class="btn primary" id="new">+ New list</button></div></div>
-    ${lists.length ? '' : '<div class="empty">No lists yet. Create one: a rule (e.g. all films by a director), an IMDb/Letterboxd CSV import, or pick movies by hand.</div>'}
-    <div class="lists">${lists.map((l) => `<a class="lcard" href="#/list/${l.id}">
-      <div class="covers ${l.cover ? 'single' : ''}">${l.cover ? `<img loading="lazy" src="${coverUrl(l.cover)}" alt="">` : l.covers.map((c) => `<img loading="lazy" src="${img(c, '', 200)}" alt="">`).join('')}</div>
+  const view = loadView();
+  let query = '';
+  let settingsOpen = false;
+  let rowsShown = view.rows; // grows with "Show more"
+
+  const cardHtml = (l) => `<a class="lcard" href="#/list/${l.id}" data-id="${l.id}">
+      <div class="covers ${l.cover ? 'single' : ''}">${l.cover ? `<img loading="lazy" src="${coverUrl(l.cover)}" alt="">` : l.covers.map((c) => `<img loading="lazy" src="${img(c, '', 240)}" alt="">`).join('')}</div>
       <div class="meta"><b>${esc(l.name)}</b>
-      <span class="dim">${l.available}${l.available < l.total ? ` of ${l.total}` : ''} ${l.total === 1 ? 'movie' : 'movies'} · ${l.watched} watched</span>
-      <div class="bar2"><i style="width:${l.available ? Math.round(100 * l.watched / l.available) : 0}%"></i></div>
-      <div class="dim" style="font-size:12px;margin-top:6px">${SOURCE_LABEL[l.sourceType] || l.sourceType}</div></div></a>`).join('')}</div>`;
-  $('#new').onclick = createDialog;
+      ${view.counts ? `<span class="dim">${l.available}${l.available < l.total ? ` of ${l.total}` : ''} ${l.total === 1 ? 'movie' : 'movies'} · ${l.watched} watched</span>` : ''}
+      ${view.progress ? `<div class="bar2"><i style="width:${Math.round(100 * pctOf(l))}%"></i></div>` : ''}
+      ${view.source ? `<div class="dim small">${SOURCE_LABEL[l.sourceType] || l.sourceType}</div>` : ''}</div></a>`;
+
+  const visible = () => {
+    let r = lists;
+    if (view.src !== 'all') r = r.filter((l) => l.sourceType === view.src);
+    if (view.hideDone) r = r.filter((l) => !(l.available > 0 && l.watched >= l.available));
+    if (query.trim()) { const q = query.trim().toLowerCase(); r = r.filter((l) => l.name.toLowerCase().includes(q)); }
+    return sortLists(r, view);
+  };
+
+  const narrow = () => window.innerWidth < 600;
+  const applyGrid = (grid) => {
+    const eff = view.cols ? (narrow() ? Math.min(view.cols, 2) : view.cols) : 0;
+    grid.style.setProperty('--card-w', `${view.size}px`);
+    grid.style.setProperty('--cover-h', `${view.coverH}px`);
+    grid.style.setProperty('--cols', eff);
+    grid.classList.toggle('fixed', !!eff);
+    grid.classList.toggle('narrow', narrow());
+    // rows limit: hide cards beyond cols*rows, where cols is whatever the browser actually laid out
+    const cards = [...grid.children];
+    cards.forEach((c) => { c.hidden = false; });
+    const moreBtn = $('#more');
+    let hiddenCount = 0;
+    if (rowsShown > 0) {
+      const cols = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length);
+      cards.forEach((c, i) => { c.hidden = i >= cols * rowsShown; });
+      hiddenCount = cards.filter((c) => c.hidden).length;
+    }
+    if (moreBtn) { moreBtn.hidden = hiddenCount === 0; moreBtn.textContent = `Show more (${hiddenCount})`; }
+  };
+
+  const select = (id, label, options, value) => `<label class="vopt"><span>${label}</span><select id="${id}">${options.map(([v, n]) => `<option value="${v}" ${String(v) === String(value) ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`;
+  const toggle = (id, label, on) => `<label class="vopt check"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> <span>${label}</span></label>`;
+  const nums = (max, zero) => [[0, zero], ...Array.from({ length: max }, (_, i) => [i + 1, String(i + 1)])];
+  const sources = [...new Set(lists.map((l) => l.sourceType))];
+
+  const draw = () => {
+    const shown = visible();
+    const canDrag = view.sort === 'custom' && view.src === 'all' && !query.trim() && !view.hideDone;
+    app.innerHTML = `<div class="head"><h2>My Lists</h2><div class="row"><button class="btn primary" id="new">+ New list</button></div></div>
+      ${lists.length ? `<div class="toolbar">
+        <input id="q" type="search" placeholder="Search lists…" value="${esc(query)}" autocomplete="off">
+        <select id="sort" title="Sort lists">${LIST_SORTS.map(([v, n]) => `<option value="${v}" ${v === view.sort ? 'selected' : ''}>${n}</option>`).join('')}</select>
+        <button class="btn icon" id="dir" title="Reverse order" ${view.sort === 'custom' ? 'disabled' : ''}>${view.dir === 'asc' ? '↑' : '↓'}</button>
+        ${sources.length > 1 ? `<select id="src" title="Filter by source"><option value="all">All sources</option>${sources.map((x) => `<option value="${x}" ${x === view.src ? 'selected' : ''}>${SOURCE_LABEL[x] || x}</option>`).join('')}</select>` : ''}
+        <button class="btn ${settingsOpen ? 'on' : ''}" id="vbtn">⚙ View</button></div>
+        ${settingsOpen ? `<div class="vpanel">
+          <label class="vopt"><span>Card size <b id="sizev">${view.size}px</b></span><input type="range" id="size" min="180" max="480" step="10" value="${view.size}"></label>
+          ${select('cols', 'Columns', nums(8, 'Auto'), view.cols)}
+          ${select('rows', 'Rows shown', nums(8, 'All'), view.rows)}
+          ${select('coverh', 'Cover height', [[90, 'Compact'], [150, 'Normal'], [220, 'Tall'], [320, 'Poster']], view.coverH)}
+          ${toggle('tcounts', 'Movie counts', view.counts)}${toggle('tprog', 'Progress bar', view.progress)}${toggle('tsrc', 'Source label', view.source)}${toggle('tdone', 'Hide completed lists', view.hideDone)}
+          <button class="btn" id="vreset">Reset view</button></div>` : ''}` : ''}
+      ${lists.length ? '' : '<div class="empty">No lists yet. Create one: a rule (e.g. all films by a director), an IMDb/Letterboxd CSV import, or pick movies by hand.</div>'}
+      ${lists.length && !shown.length ? '<div class="empty">No list matches the search or filter.</div>' : ''}
+      <div class="lists" id="grid">${shown.map(cardHtml).join('')}</div>
+      <div class="center"><button class="btn" id="more" hidden>Show more</button></div>
+      ${canDrag && shown.length > 1 ? '<p class="dim center small">Drag the cards to arrange them.</p>' : ''}`;
+    $('#new').onclick = createDialog;
+    const grid = $('#grid');
+    applyGrid(grid);
+    if (!lists.length) return;
+    const persist = () => saveView({ ...view, src: view.src });
+    $('#q').oninput = (e) => { query = e.target.value; const pos = e.target.selectionStart; draw(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); };
+    $('#sort').onchange = (e) => { view.sort = e.target.value; persist(); draw(); };
+    $('#dir').onclick = () => { view.dir = view.dir === 'asc' ? 'desc' : 'asc'; persist(); draw(); };
+    const src = $('#src'); if (src) src.onchange = (e) => { view.src = e.target.value; persist(); draw(); };
+    $('#vbtn').onclick = () => { settingsOpen = !settingsOpen; draw(); };
+    $('#more').onclick = () => { rowsShown += view.rows || 1; applyGrid(grid); };
+    if (settingsOpen) {
+      $('#size').oninput = (e) => { view.size = +e.target.value; $('#sizev').textContent = `${view.size}px`; applyGrid(grid); };
+      $('#size').onchange = persist;
+      $('#cols').onchange = (e) => { view.cols = +e.target.value; persist(); applyGrid(grid); };
+      $('#rows').onchange = (e) => { view.rows = +e.target.value; rowsShown = view.rows; persist(); applyGrid(grid); };
+      $('#coverh').onchange = (e) => { view.coverH = +e.target.value; persist(); applyGrid(grid); };
+      $('#tcounts').onchange = (e) => { view.counts = e.target.checked; persist(); draw(); };
+      $('#tprog').onchange = (e) => { view.progress = e.target.checked; persist(); draw(); };
+      $('#tsrc').onchange = (e) => { view.source = e.target.checked; persist(); draw(); };
+      $('#tdone').onchange = (e) => { view.hideDone = e.target.checked; persist(); draw(); };
+      $('#vreset').onclick = () => { Object.assign(view, VIEW_DEFAULTS); rowsShown = 0; saveView(view); draw(); };
+    }
+    if (canDrag) dragCards(grid, async (ids) => {
+      try { await api('order', { ids }); ids.forEach((id, i) => { const l = lists.find((x) => x.id === id); if (l) l.sortIndex = i; }); } catch (e) { toast(e.message, true); }
+    });
+  };
+  window.onresize = () => { const g = $('#grid'); if (g) applyGrid(g); };
+  draw();
+}
+
+function dragCards(grid, onChange) {
+  let dragging = null;
+  grid.querySelectorAll('.lcard').forEach((c) => { c.draggable = true; });
+  grid.addEventListener('dragstart', (e) => { dragging = e.target.closest('.lcard'); dragging?.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; });
+  grid.addEventListener('dragend', () => { dragging?.classList.remove('drag'); dragging = null; });
+  grid.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const over = e.target.closest('.lcard');
+    if (!dragging || !over || over === dragging) return;
+    const r = over.getBoundingClientRect();
+    grid.insertBefore(dragging, e.clientX > r.left + r.width / 2 ? over.nextSibling : over);
+  });
+  grid.addEventListener('drop', (e) => { e.preventDefault(); onChange([...grid.querySelectorAll('.lcard')].map((c) => c.dataset.id)); });
 }
 
 function needLogin(e) {

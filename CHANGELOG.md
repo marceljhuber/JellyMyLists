@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+- Customisable overview: card size (180-480 px), columns (auto or 1-8), rows shown (all or 1-8, with "Show more"), cover height, and toggles for movie counts, progress bar and source label. The view is remembered per browser.
+- Sorting of the lists: my own order (drag & drop, saved on the server), name, date created, last updated, number of movies, % watched, left to watch, source type; reverse direction; search; filter by source; hide completed lists.
+- On phones fixed column counts are capped at 2.
+
 ## 0.4.0
 - Speed: the movie index is cached per user (rebuilt only when the library changes), rule lists are recomputed only when the library or the rule changed, watched state stays live. API calls on a 1,800 movie library: ~110 ms → ~25 ms.
 - Posters are lazy `<img>` tags (they used to all load at once), smaller size, static files cached for good, the web font no longer blocks rendering.

@@ -22,7 +22,7 @@ through the File Transformation plugin (optional).
 `GET api/status` · `GET api/lists` · `POST api/lists` (create) · `GET api/lists/{id}` · `POST api/lists/{id}` (rename, sort, rule, url) ·
 `DELETE api/lists/{id}` · `POST api/lists/{id}/sync` · `POST api/lists/{id}/import` (append text) · `POST api/lists/{id}/order` (save order) ·
 `POST api/lists/{id}/entries` · `DELETE api/lists/{id}/entries/{key}` · `POST|DELETE api/lists/{id}/cover` · `GET cover/{file}` ·
-`POST api/preview` (how pasted text is understood) · `GET api/search?q=`
+`POST api/order` (the user's own order of lists) · `POST api/preview` (how pasted text is understood) · `GET api/search?q=`
 
 ## Data model
 A list has `SourceType` (manual | rule | csv | mdblist | letterboxd | tmdb), optional rule/url, `DefaultSort`, `CoverFile`, and entries.
@@ -31,6 +31,11 @@ movies you add later show up without touching the list, and unmatched entries ar
 `SourcePos` (position in the source) and `ManualPos` (saved order) are separate, so saving an order never destroys the source order,
 and a re-sync only rewrites `SourcePos`. Entries added by hand are flagged `Manual` and survive a sync.
 Watched state is **not stored**; it comes from Jellyfin per user.
+
+## Overview view settings
+Card size, columns, rows, cover height, toggles, sort, direction and source filter live in `localStorage['ml.view']` (per browser; defaults in `VIEW_DEFAULTS` in `app.js`).
+Only the "My order" sort is server-side: `MyList.SortIndex`, written by `POST api/order`, which makes drag and drop work across devices.
+The grid is plain CSS driven by `--card-w`, `--cols`, `--cover-h`. The rows limit measures how many columns the browser actually laid out and hides the cards beyond `cols × rows`.
 
 ## Decisions worth knowing (and why)
 - **No IMDb/Letterboxd URL scraping as the main path.** From a server, IMDb answers `202` with an empty body (WAF) and Letterboxd `403` (Cloudflare);
@@ -60,4 +65,5 @@ Built per Jellyfin line: `-p:JellyfinTarget=10.11` (net9.0, default) or `12` (ne
 - Confirm on a real server that poster links open the details page (fixed with `serverId`; verified only on the demo server).
 - Letterboxd URL and TMDB list import are untested against the real services.
 - Release as a plugin repository (`manifest.json` + GitHub release, like JellyTrends) so it installs from the Jellyfin catalog.
+- Poster size / columns for the list page (only the overview is customisable so far); view settings per user on the server instead of per browser.
 - Series support; shared lists between users; GitHub Actions to build and test.

@@ -41,7 +41,7 @@ public sealed class ListStore
     {
         lock (_lock)
         {
-            return _lists.Where(l => l.OwnerId == ownerId).OrderBy(l => l.Name, StringComparer.OrdinalIgnoreCase).ToList();
+            return _lists.Where(l => l.OwnerId == ownerId).OrderBy(l => l.SortIndex ?? int.MaxValue).ThenBy(l => l.Name, StringComparer.OrdinalIgnoreCase).ToList();
         }
     }
 
@@ -93,6 +93,22 @@ public sealed class ListStore
         lock (_lock)
         {
             change(list);
+            Save();
+        }
+    }
+
+    /// <summary>Store the user's own order of lists; lists not mentioned keep their place after the mentioned ones.</summary>
+    public void SetOrder(string ownerId, IReadOnlyList<string> ids)
+    {
+        lock (_lock)
+        {
+            var pos = ids.Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i);
+            var next = ids.Count;
+            foreach (var l in _lists.Where(l => l.OwnerId == ownerId).OrderBy(l => l.SortIndex ?? int.MaxValue).ThenBy(l => l.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                l.SortIndex = pos.TryGetValue(l.Id, out var p) ? p : next++;
+            }
+
             Save();
         }
     }
