@@ -163,11 +163,7 @@ public sealed class MyListsController(
                     store.Add(list);
                     service.Merge(list, parsed);
                     break;
-                case "rule":
-                    store.Add(list);
-                    await service.SyncAsync(list, user, HttpContext.RequestAborted).ConfigureAwait(false);
-                    break;
-                case "letterboxd" or "tmdb" or "mdblist":
+                case "rule" or "letterboxd" or "tmdb" or "mdblist":
                     store.Add(list);
                     try
                     {

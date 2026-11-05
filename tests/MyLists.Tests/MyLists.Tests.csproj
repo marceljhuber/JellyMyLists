@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <!-- net10.0 matches the Jellyfin 12 build; override with -p:TargetFramework=net9.0 on a .NET 9 machine. -->
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -11,8 +12,9 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Only Importers.cs: it has no Jellyfin dependencies, so the tests need no server assemblies. -->
+    <!-- Only Jellyfin-free sources (parser, models, merge/order logic): they have no Jellyfin dependencies, so the tests need no server assemblies. -->
     <Compile Include="../../src/Jellyfin.Plugin.MyLists/Importers.cs" Link="Importers.cs" />
     <Compile Include="../../src/Jellyfin.Plugin.MyLists/Models.cs" Link="Models.cs" />
+    <Compile Include="../../src/Jellyfin.Plugin.MyLists/ListMerge.cs" Link="ListMerge.cs" />
   </ItemGroup>
 </Project>

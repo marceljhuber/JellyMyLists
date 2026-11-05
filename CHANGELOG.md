@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+- Fix: a rule list with only a genre (no director/actor) failed with HTTP 500.
+- Fix: a list whose source contained the same film twice, or an order request with a repeated id, failed with HTTP 500; the first occurrence now wins.
+- Fix: a new rule/Letterboxd/TMDb/MDBList list whose first sync failed was left behind empty.
+- Fix: films appended by a re-import now go after the existing ones instead of colliding with their positions.
+- Tests target net10.0 (Jellyfin 12.4); new merge/order tests.
+- Build: the plugin and the test project no longer share one restore folder (`artifacts/obj`), which made test builds fail every other run.
+
 ## 0.5.0
 - Customisable overview: card size (180-480 px), columns (auto or 1-8), rows shown (all or 1-8, with "Show more"), cover height, and toggles for movie counts, progress bar and source label. The view is remembered per browser.
 - Sorting of the lists: my own order (drag & drop, saved on the server), name, date created, last updated, number of movies, % watched, left to watch, source type; reverse direction; search; filter by source; hide completed lists.

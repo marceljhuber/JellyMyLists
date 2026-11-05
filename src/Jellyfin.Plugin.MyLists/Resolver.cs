@@ -151,7 +151,14 @@ public sealed class Resolver : IDisposable
             }
         }
 
-        return new Index { ById = all.ToDictionary(Id), ByImdb = byImdb, ByTmdb = byTmdb, ByTitle = byTitle };
+        // TryAdd: a repository that returns a row twice must not make every page load fail.
+        var byId = new Dictionary<string, BaseItem>(all.Count);
+        foreach (var item in all)
+        {
+            byId.TryAdd(Id(item), item);
+        }
+
+        return new Index { ById = byId, ByImdb = byImdb, ByTmdb = byTmdb, ByTitle = byTitle };
     }
 
     /// <summary>Movies matching a rule (director and/or actor, plus optional genre and years), in release order. Empty rule matches nothing (never "the whole library").</summary>
@@ -165,16 +172,20 @@ public sealed class Resolver : IDisposable
         var q = Query(user);
         // Narrow by name in the database first; Jellyfin ignores the role type for this filter,
         // so the role itself (director vs. producer/writer/actor) is verified per movie below.
-        var typed = (!string.IsNullOrWhiteSpace(rule.Director) ? rule.Director : rule.Actor)!.Trim();
-        // The database match is case sensitive: resolve what the user typed ("tarantino", "Quentin  Tarantino") to the stored name.
-        var stored = _libraryManager.GetPeopleNames(new InternalPeopleQuery { NameContains = typed.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last() })
-            .FirstOrDefault(n => Norm(n) == Norm(typed));
-        if (stored is null)
+        // Genre-only rules have no person (this used to throw a NullReferenceException).
+        var typed = (!string.IsNullOrWhiteSpace(rule.Director) ? rule.Director : rule.Actor)?.Trim();
+        if (!string.IsNullOrEmpty(typed))
         {
-            return [];
-        }
+            // The database match is case sensitive: resolve what the user typed ("tarantino", "Quentin  Tarantino") to the stored name.
+            var stored = _libraryManager.GetPeopleNames(new InternalPeopleQuery { NameContains = typed.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last() })
+                .FirstOrDefault(n => Norm(n) == Norm(typed));
+            if (stored is null)
+            {
+                return [];
+            }
 
-        q.Person = stored;
+            q.Person = stored;
+        }
 
         if (!string.IsNullOrWhiteSpace(rule.Genre))
         {

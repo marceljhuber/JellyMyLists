@@ -7,46 +7,9 @@ namespace Jellyfin.Plugin.MyLists;
 /// <summary>Sync/merge logic and the JSON shapes the web page consumes.</summary>
 public sealed class ListService(ListStore store, Resolver resolver, IHttpClientFactory http)
 {
-    private static string EntryId(Importers.Candidate c) => c.Imdb ?? (c.Tmdb is not null ? "tmdb" + c.Tmdb : Resolver.Norm(c.Title) + c.Year);
-
-    private static string EntryId(ListEntry e) => e.Imdb ?? (e.Tmdb is not null ? "tmdb" + e.Tmdb : Resolver.Norm(e.Title) + e.Year);
-
     /// <summary>Merge freshly read candidates into a list: update source positions, add new, drop vanished (but never manual ones).</summary>
-    public void Merge(MyList list, IReadOnlyList<Importers.Candidate> candidates, bool appendOnly = false)
-    {
-        store.Mutate(list, l =>
-        {
-            var existing = l.Entries.ToDictionary(EntryId, e => e);
-            var seen = new HashSet<string>();
-            for (var i = 0; i < candidates.Count; i++)
-            {
-                var c = candidates[i];
-                var id = EntryId(c);
-                if (!seen.Add(id))
-                {
-                    continue;
-                }
-
-                if (existing.TryGetValue(id, out var e))
-                {
-                    e.SourcePos = appendOnly ? e.SourcePos : i;
-                    e.Imdb ??= c.Imdb;
-                    e.Tmdb ??= c.Tmdb;
-                }
-                else
-                {
-                    l.Entries.Add(new ListEntry { Imdb = c.Imdb, Tmdb = c.Tmdb, Title = c.Title, Year = c.Year, SourcePos = appendOnly ? l.Entries.Count : i });
-                }
-            }
-
-            if (!appendOnly)
-            {
-                l.Entries.RemoveAll(e => !e.Manual && !seen.Contains(EntryId(e)));
-            }
-
-            l.SyncedAt = DateTime.UtcNow;
-        });
-    }
+    public void Merge(MyList list, IReadOnlyList<Importers.Candidate> candidates, bool appendOnly = false) =>
+        store.Mutate(list, l => ListMerge.Apply(l, candidates, appendOnly));
 
     /// <summary>Refresh a list from its source. Rule lists recompute locally; URL sources are re-fetched.</summary>
     public async Task SyncAsync(MyList list, User user, CancellationToken ct)
@@ -199,18 +162,8 @@ public sealed class ListService(ListStore store, Resolver resolver, IHttpClientF
         };
     }
 
-    public void SaveOrder(MyList list, IReadOnlyList<string> keys)
-    {
-        store.Mutate(list, l =>
-        {
-            var pos = keys.Select((k, i) => (k, i)).ToDictionary(x => x.k, x => x.i);
-            var next = keys.Count;
-            foreach (var e in l.Entries)
-            {
-                e.ManualPos = pos.TryGetValue(e.Key, out var p) ? p : next++;
-            }
-        });
-    }
+    public void SaveOrder(MyList list, IReadOnlyList<string> keys) =>
+        store.Mutate(list, l => ListMerge.SetManualOrder(l, keys));
 
     public void AddManual(MyList list, BaseItem item)
     {

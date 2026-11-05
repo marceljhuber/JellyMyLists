@@ -102,8 +102,8 @@ public sealed class ListStore
     {
         lock (_lock)
         {
-            var pos = ids.Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i);
-            var next = ids.Count;
+            var pos = ListMerge.Positions(ids);
+            var next = pos.Count;
             foreach (var l in _lists.Where(l => l.OwnerId == ownerId).OrderBy(l => l.SortIndex ?? int.MaxValue).ThenBy(l => l.Name, StringComparer.OrdinalIgnoreCase))
             {
                 l.SortIndex = pos.TryGetValue(l.Id, out var p) ? p : next++;
