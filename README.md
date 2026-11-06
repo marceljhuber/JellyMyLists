@@ -34,7 +34,7 @@ tag on movies, and neither shows you "I have seen 142 of these 250". My Lists is
 
 ## Install
 
-Requirements: Jellyfin **10.11.x** (tested on 10.11.11). A build for 12.x compiles but has **not been run** against a 12 server.
+Requirements: Jellyfin **10.11.x** (tested on 10.11.11) or **12.x** (`-p:JellyfinTarget=12`, tested on 12.4).
 For the sidebar entry install the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) plugin; without it everything works at `http://<server>:8096/MyLists/`.
 
 1. `scripts/package.sh` (needs the .NET 9 SDK) builds `dist/MyLists-<version>.1011-jellyfin-10.11.zip`.
@@ -95,7 +95,7 @@ Click a poster to open the movie in Jellyfin. `Edit` renames, changes the rule, 
 - Movies only, no series.
 - A rule needs the **full person name** as stored in Jellyfin's metadata; a movie whose metadata lacks the director entry will not match.
 - The movie index is cached per user and rebuilt when your library changes (a few hundred ms for ~2,000 movies, once); only watched state is read on every load. Posters load lazily.
-- Jellyfin 12 build is untested at runtime; 10.9 / 10.10 are not supported.
+- 10.9 / 10.10 are not supported.
 
 ## Development
 
